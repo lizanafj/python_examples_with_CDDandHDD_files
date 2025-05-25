@@ -6,9 +6,9 @@ These examples are supplementary material of the following scientific article:
 
   **Article reference**
 
-## Overview of examples
+## Overview of the examples
 
-Working with an individual netCDF4 file. 
+Working with netCDF4 files at global or national scale. 
 
 	-(1) Read, analysis, and visualisation of NetCDF4 files with CDD and HDD
 
