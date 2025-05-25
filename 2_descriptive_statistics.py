@@ -109,12 +109,12 @@ stats_table = files_table[["data_type","file_name"]].copy()
 
 # Add columns for statistics
 stats_table["min"] = np.nan
+stats_table["10th_percentile"] = np.nan
+stats_table["median"] = np.nan
+stats_table["90th_percentile"] = np.nan
 stats_table["max"] = np.nan
 stats_table["mean"] = np.nan
 stats_table["std"] = np.nan
-stats_table["median"] = np.nan
-stats_table["90th_percentile"] = np.nan
-stats_table["10th_percentile"] = np.nan
 stats_table["range"] = np.nan
 
 # Loop through each file to calculate statistics
@@ -135,12 +135,13 @@ for index, row in stats_table.iterrows():
     flat_data = flat_data[~np.isnan(flat_data)]
     
     stats_table.at[index, "min"] = np.min(flat_data)
+    stats_table.at[index, "10th_percentile"] = np.percentile(flat_data, 10)
+    stats_table.at[index, "median"] = np.median(flat_data)
+    stats_table.at[index, "90th_percentile"] = np.percentile(flat_data, 90)
     stats_table.at[index, "max"] = np.max(flat_data)
     stats_table.at[index, "mean"] = np.mean(flat_data)
     stats_table.at[index, "std"] = np.std(flat_data)
-    stats_table.at[index, "median"] = np.median(flat_data)
-    stats_table.at[index, "90th_percentile"] = np.percentile(flat_data, 90)
-    stats_table.at[index, "10th_percentile"] = np.percentile(flat_data, 10)
+
     stats_table.at[index, "range"] = f"{stats_table.at[index, 'min']} - {stats_table.at[index, 'max']}"
 
     print(f"Statistics for {file_name}:", " - done!")
