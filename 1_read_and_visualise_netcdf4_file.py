@@ -2,42 +2,10 @@
 
 ###############################################################################
 # Program : 
-# Authors  : Jesus
-# Date	  : 22 January 2023
+# Authors  : Jesus Lizana
+# Date	  : 25 April 2025
 # Purpose : Work with NetCDF4 files
 ##############################################################################
-
-
-"""
-Working with NetCDF4 files:
-
-(1) Read, analysis, operate and visualise netCDF4 file. 
-
-"""   
-
-  
-#%%
-
-##########################################################################
-##########################################################################
-
-#INPUT DATA 
-
-#*.nc file     
-file = "item3236_6hrly_mean_h000_2006-10_2006-11.nc"
-ensemble = "*.nc"
-
-#variables
-lat = "latitude0"
-long = "longitude0"
-temp = "item3236_6hrly_mean"
-time = "time0"
-
-##########################################################################
-##########################################################################
-
-
-#%%
 
 import os
 import glob
@@ -65,20 +33,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-print("All libraries imported")
-
-
-
-#%%
-
-# get folder location of script
-cwd = os.path.dirname(__file__) 
-
-folder = cwd+"/DATA"
-
-os.chdir(folder)
-
-#%%
 ###########################################################
 
 #Basic function for netCDF4 files: 
@@ -91,9 +45,95 @@ def print_variables(data):
     for i in data.variables:
         print(i, data.variables[i].units, data.variables[i].shape)
         
+print("All libraries imported")
+
+
+#%%
+
+"""
+
+Data directory 
+
+(a) Identify all data files and create a table with names and path
+
+"""   
+##########################################################################
+##########################################################################
+
+#INPUT DATA 
+
+# get folder location of script
+cwd = os.path.dirname(__file__) 
+
+#go into folder cwd + DATA
+folder = cwd+"/DATA"
+
+#create a list with all files inside subfolders
+os.chdir(folder)
+files = glob.glob(folder+"/*/*.nc")
+print("files :",files)
+
+#create a table with file name (without extension), and file path
+
+files_table = pd.DataFrame(files, columns=["file_path"])
+files_table["file_name"] = files_table["file_path"].apply(lambda x: os.path.splitext(os.path.basename(x))[0])
+
+#new column to classify the data by CDD or HDD
+files_table["data_type"] = files_table["file_name"].apply(lambda x: "CDD" if "CDD" in x else "HDD")
+
+#first column file name, second column file path
+files_table = files_table[["data_type","file_name", "file_path"]]
+
+#sort by file name
+files_table = files_table.sort_values(by="file_name").reset_index(drop=True)
+
+#show table
+print("Files table:")
+print(files_table)
+
+
+  
+#%%
+
+"""
+
+Data directory 
+
+(b) Select one file to read from the data directory
+
+"""   
+
+##########################################################################
+##########################################################################
+
+#SELECT DATA AND VARIABLE TO READ
+
+#Select file name
+file_name = "CDD_historical_mean_v1"
+variable = "Cooling Degree Days (CDD)" #OR "Heating Degree Days (HDD)"
+
+#variables
+lat = "latitude0"
+long = "longitude0"
+value = "CDD_total" #OR "HDD_total"
+
+#get palth from table
+file_path = files_table[files_table["file_name"] == file_name]["file_path"].values[0]	
+print("File path:", file_path)
+
+#*.nc file     
+file = file_path
+
 
 
 #%%   
+
+"""
+Working with NetCDF4 files of CDD and HDD:
+
+(1) Read, analysis and visualise netCDF4 file. 
+
+"""   
 
 ####################################################
 
@@ -111,8 +151,6 @@ print("")
 #all details
 print(data)
 
-data.close()
-
 
 
 #%%   
@@ -123,93 +161,132 @@ data.close()
 
 ####################################################
 
-
 #Open using netCDF library: 
     
 data = Dataset(file, mode='r', format="NetCDF")
 
-data_temp = data.variables[temp][:,0,:,:]
-data_lat = data.variables["latitude0"][:]
-data_long = data.variables["longitude0"][:]
-data_time = data.variables["time0"][:]
+data_value = data.variables[value][:]
+data_lat = data.variables[lat][:]
+data_long = data.variables[long][:]
 
-print(data_temp.max())
-print(data_temp.mean())
-print(data_temp.min())
-
-
-#%%   
-
-####################################################
-
-##code 3 - change lon from (0-360) to (-180-180)
-
-####################################################
-
-######To change lon values to plot with Spain in centre
-#lon[lon>180]-=360
-def long_change(temp,long):
-    ###  Section added ################
-    # map lon values to -180..180 range
-    f = lambda x: ((x+180) % 360) - 180
-    lon = f(long)
-    # rearange data
-    ind = np.argsort(lon)
-    long1 = lon[ind]
-    temp1 = temp[:,:,ind]     #check how many indices - temp[:,:,ind] or - temp[:,ind]
-    return temp1, long1
-
-#Change long for normal projection 
-data_temp1, data_long1 = long_change(data_temp,data_long)
-
-
-#%%  
-
-####################################################
-
-##code 4 - convert from K to ºC
-
-####################################################
-
-#Convert from Kelvin to Degree C
-data_temp1 = data_temp1[:,:,:] - 273.15
+print(data_value.max())
+print(data_value.mean())
+print(data_value.min())
 
 
 #%%   
 
 ####################################################
 
-##code 5 - Figure of map
+##code 3 - statistics
 
 ####################################################
 
-from mpl_toolkits.basemap import Basemap
+# Flatten and remove NaNs for histogram
+flat_data = np.array(data_value).flatten()
+flat_data = flat_data[~np.isnan(flat_data)]
 
-fig1, ax1 = plt.subplots(1,1, figsize=(8,6))
+plt.figure(figsize=(8, 5))
+plt.hist(flat_data, bins=50, color='skyblue', edgecolor='black')
+plt.title('Histogram of values')
+plt.xlabel(variable)
+plt.ylabel('Frequency')
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.ylim(bottom=0)
+plt.xlim(left=0)  # Set x-axis limit to start from 0
+plt.tight_layout()
+plt.show()
 
-map = Basemap(projection='mill',llcrnrlat=-90,urcrnrlat=90,
-            llcrnrlon=-180,urcrnrlon=180,resolution='l') 
-# projection, lat/lon extents and resolution of polygons to draw
-# resolutions: c - crude, l - low, i - intermediate, h - high, f - full
+mean_val = np.mean(flat_data)
+std_val = np.std(flat_data)
+median_val = np.median(flat_data)
+percentile_90 = np.percentile(flat_data, 90)
+percentile_10 = np.percentile(flat_data, 10)
+min_val = np.min(flat_data)
+max_val = np.max(flat_data)
 
-#map.drawcoastlines()
-#map.drawstates()
-#map.drawcountries()
-map.drawlsmask(land_color="none", ocean_color='#CCFFFF',zorder=20) # can use HTML names or codes for colors
-#map.drawcounties() # you can even add counties (and other shapefiles!)
+print("Statistics for data_value:")
+print(f"Mean: {mean_val:.2f}")
+print(f"Standard deviation: {std_val:.2f}")
+print(f"Median: {median_val:.2f}")
+print(f"90th percentile: {percentile_90:.2f}")
+print(f"10th percentile: {percentile_10:.2f}")
+print(f"Range: min={min_val:.2f}, max={max_val:.2f}")
 
-lons,lats= np.meshgrid(data_long1,data_lat) # for this dataset, longitude is 0 through 360, so you need to subtract 180 to properly display on map
-x,y = map(lons,lats)
 
-cmap = plt.get_cmap('plasma')
-temp1 = map.contourf(x,y,data_temp1[0,:,:], cmap=cmap)     #air_gauss air_idw air_gauss #
-#temp1 = map.drawlsmask(land_color="none", ocean_color='#CCFFFF',zorder=1)
 
-cb = map.colorbar(temp1,"bottom", size="5%", pad="2%")
-plt.title('Example of map')
-cb.set_label('Temperature - ºC')
+#%%   
 
+####################################################
+
+##code 4 - visualise map with cartopy
+
+####################################################
+
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.colors import BoundaryNorm
+from matplotlib.cm import get_cmap
+
+# --- Fix longitudes from 0-360 to -180 to 180 if needed ---
+data_long_fixed = np.where(data_long > 180, data_long - 360, data_long)
+
+# --- Prepare data for plotting (2D or extract 1st level of 3D) ---
+if data_value.ndim == 3:
+    plot_data = data_value[0, :, :]
+elif data_value.ndim == 2:
+    plot_data = data_value
+else:
+    raise ValueError("data_value must be a 2D or 3D array")
+
+lons, lats = np.meshgrid(data_long_fixed, data_lat)
+
+# --- Plotting ---
+fig = plt.figure(figsize=(10, 8))
+ax = plt.axes(projection=ccrs.PlateCarree())
+ax.set_global()
+#ax.coastlines(color='white', linewidth=0.8)
+ax.add_feature(cfeature.BORDERS, color='white',linewidth=0.8)
+ax.add_feature(cfeature.LAND, facecolor='none')
+ax.add_feature(cfeature.OCEAN, facecolor="#FFFFFF")
+
+for spine in ax.spines.values():
+    spine.set_visible(False)
+
+# --- Color map and levels ---
+vmin, vmax = 0, 3500
+levels = np.linspace(vmin, vmax, 15)  # 14 bins
+cmap = get_cmap('turbo', len(levels)-1)
+norm = BoundaryNorm(boundaries=levels, ncolors=cmap.N)
+
+# --- Plot with consistent normalization ---
+mesh = ax.contourf(lons, lats, plot_data, levels=levels, 
+                   transform=ccrs.PlateCarree(), cmap=cmap, norm=norm, extend='max')
+
+# --- Colorbar ---
+cb = plt.colorbar(mesh, orientation='horizontal', pad=0.05, aspect=50, ax=ax)
+cb.set_label(variable, fontsize=12)
+cb.set_ticks(np.arange(0, 3501, 500))
+cb.outline.set_visible(False)
+cb.ax.tick_params(left=False, right=False, top=False, bottom=False)  # Hide ticks and labels
+
+plt.title('Global gridded map of ' + file_name)
+plt.tight_layout()
+
+#save in folder cwd + output as jpg
+output_folder = cwd + "/OUTPUT"
+if not os.path.exists(output_folder):
+    os.makedirs(output_folder)
+output_file = os.path.join(output_folder, file_name + ".jpg")
+plt.savefig(output_file, dpi=300, bbox_inches='tight')
+print(f"Plot saved to {output_file}")
+
+# Show the plot
 plt.show()
 
 
-#END
+
+
+#%% 
