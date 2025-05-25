@@ -168,3 +168,62 @@ print(f"Statistics table saved to {output_file}")
 print("All done!")
 
 
+# End of script
+# %%
+
+"""
+Descriptive statistics of the CDD and HDD dataset
+
+(2) Boxplot of the dataset 
+
+"""   
+
+
+# Prepare data for each group
+hdd_data = []
+hdd_labels = []
+cdd_data = []
+cdd_labels = []
+
+for idx, row in files_table.iterrows():
+    file_path = row["file_path"]
+    data_type = row["data_type"]
+    file_name = row["file_name"]
+    data = Dataset(file_path, mode='r', format="NetCDF")
+    var_name = "CDD_total" if data_type == "CDD" else "HDD_total"
+    values = np.array(data.variables[var_name][:]).flatten()
+    values = values[~np.isnan(values)]
+    if data_type == "HDD":
+        hdd_data.append(values)
+        hdd_labels.append(file_name)
+    else:
+        cdd_data.append(values)
+        cdd_labels.append(file_name)
+    data.close()
+
+fig, axes = plt.subplots(2, 1, figsize=(10, 14), sharex=False)
+
+# Blues palette for HDD
+blues = plt.cm.Blues(np.linspace(0.5, 1, len(hdd_data)))
+hdd_box = axes[0].boxplot(hdd_data, patch_artist=True, labels=hdd_labels, showfliers=False)
+for patch, color in zip(hdd_box['boxes'], blues):
+    patch.set_facecolor(color)
+axes[0].set_title("Distribution of HDD data across files")
+axes[0].set_ylabel("HDD")
+axes[0].tick_params(axis='x', rotation=90)
+
+# Reds palette for CDD
+reds = plt.cm.Reds(np.linspace(0.5, 1, len(cdd_data)))
+cdd_box = axes[1].boxplot(cdd_data, patch_artist=True, labels=cdd_labels, showfliers=False)
+for patch, color in zip(cdd_box['boxes'], reds):
+    patch.set_facecolor(color)
+axes[1].set_title("Distribution of CDD data across files")
+axes[1].set_ylabel("CDD")
+axes[1].tick_params(axis='x', rotation=90)
+
+plt.tight_layout()
+plt.show()
+
+
+
+# %%

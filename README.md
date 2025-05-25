@@ -4,21 +4,21 @@ Examples in Python to analysis NetCDF4 files with CDD and HDD variables.
 Different python libraries are used, with the most useful procedures to start working with CDD and HDD files.
 These examples are supplementary material of the following scientific article: 
 
-  **Article reference - under review**
+  **Article reference**
 
 ## Overview of examples
 
 Working with an individual netCDF4 file. 
 
-	-(1) Read, analysis, operate and visualise netCDF4 file. 
+	-(1) Read, analysis, and visualisation of NetCDF4 files with CDD and HDD
 
-	-(2) Read, modify and write netCDF4 file - using netCDF4 library. 
+	-(2) Descriptive statistics of the CDD and HDD dataset.
 
-	-(3) Read, modify and write netCDF4 file - using xarray library. 
+	-(3) Spatial analysis of scenarios – distribution of mean values per subregion. 
 
-	-(4) Function to change longitude from 0-360 to -180-180.
+	-(4) Climate variability – 10th percentile, median and 90th percentile per subregion.
 
-	-(5) Function to find the index of the point closest to a specific lat/long.
+	-(5) Analysis per country – CDD and HDD analysis in specific countries.
 
 
 #### Install dependencies (use Python3)
