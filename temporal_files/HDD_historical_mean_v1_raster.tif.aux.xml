@@ -1,0 +1,12 @@
+<PAMDataset>
+  <PAMRasterBand band="1">
+    <Description>HDD_total</Description>
+    <Metadata>
+      <MDI key="STATISTICS_MAXIMUM">25452.541015625</MDI>
+      <MDI key="STATISTICS_MEAN">9002.6629032759</MDI>
+      <MDI key="STATISTICS_MINIMUM">0</MDI>
+      <MDI key="STATISTICS_STDDEV">8115.5441453611</MDI>
+      <MDI key="STATISTICS_VALID_PERCENT">33.87</MDI>
+    </Metadata>
+  </PAMRasterBand>
+</PAMDataset>

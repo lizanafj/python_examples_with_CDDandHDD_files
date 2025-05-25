@@ -7,6 +7,7 @@
 # Purpose : Work with NetCDF4 files
 ##############################################################################
 
+#%%
 import os
 import glob
 
